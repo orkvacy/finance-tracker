@@ -1,0 +1,9 @@
+.git
+.gitignore
+bin/
+data/
+design/
+node_modules/
+web/node_modules/
+web/dist/
+*.md

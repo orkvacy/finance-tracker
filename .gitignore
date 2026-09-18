@@ -1,0 +1,45 @@
+# ---------------------------------------------------------------- hasil build
+/bin/
+/web/node_modules/
+/web/tsconfig.tsbuildinfo
+
+# Isi dist dibuang, TAPI .gitkeep wajib ikut ter-commit:
+# //go:embed all:dist gagal kompilasi kalau foldernya tidak ada sama sekali,
+# sehingga clone baru tidak bisa di-build sebelum `npm run build` dijalankan.
+/web/dist/*
+!/web/dist/.gitkeep
+
+# ---------------------------------------------------------------- data runtime
+# TIDAK PERNAH masuk repo.
+/data/
+*.db
+*.db-wal
+*.db-shm
+
+# ---------------------------------------------------------------- rahasia
+.env
+.env.*
+!.env.example
+
+# ------------------------------------------------- dokumen & materi pribadi
+#
+# Hanya kode yang di-push. Tidak ada berkas .md yang ikut ter-commit.
+# Dokumen perencanaan memuat pola keuangan pribadi (pemasukan, cicilan,
+# kebiasaan belanja) dan tidak dibutuhkan build sama sekali -- Dockerfile
+# tidak pernah menyentuhnya.
+#
+# PERINGATAN: karena tidak ter-commit, berkas-berkas ini TIDAK punya cadangan.
+# Simpan salinannya di Drive atau sejenisnya; kalau laptop rusak, PRD, backlog,
+# jurnal, dan README ikut hilang.
+#
+# Untuk mengikutsertakannya kembali, hapus baris-baris di bawah ini.
+*.md
+/docs/
+/design/
+
+# ---------------------------------------------------------------- editor & OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/settings.local.json
