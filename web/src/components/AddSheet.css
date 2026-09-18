@@ -1,0 +1,114 @@
+.scrim {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(0, 0, 0, .42);
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+.scrim.on { opacity: 1; pointer-events: auto; }
+
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  background: var(--card-2);
+  border-radius: 14px 14px 0 0;
+  transform: translateY(100%);
+  /* Kurva pegas khas iOS: cepat di awal, mendarat halus tanpa memantul. */
+  transition: transform .42s var(--spring);
+  display: flex; flex-direction: column;
+  max-height: 94dvh;
+  padding-bottom: var(--safe-bottom);
+}
+.sheet.on { transform: translateY(0); }
+.sheet[aria-hidden="true"] { visibility: hidden; }
+.sheet.on[aria-hidden="false"] { visibility: visible; }
+
+.grabber {
+  width: 36px; height: 5px; border-radius: 3px;
+  background: var(--content-3); opacity: .45; margin: 7px auto 0;
+}
+
+.sheethead {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 8px 10px 4px;
+}
+.txt {
+  border: 0; background: transparent; color: var(--accent);
+  cursor: pointer; padding: 10px 8px; min-height: 44px; border-radius: var(--r-sm);
+}
+.txt.strong { font-weight: 600; }
+.txt:disabled { color: var(--content-3); opacity: .5; cursor: default; }
+
+.seg { display: inline-flex; background: var(--fill); border-radius: 9px; padding: 2px; }
+.seg button {
+  border: 0; background: transparent; color: var(--content-2);
+  font-size: var(--t-sub); padding: 6px 14px; border-radius: 7px;
+  cursor: pointer; min-height: 34px;
+}
+.seg button[aria-pressed="true"] {
+  background: var(--card); color: var(--content); font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .16);
+}
+
+.entry { padding: 4px 16px 10px; text-align: center; }
+.entry .cur { font-size: var(--t-sub); color: var(--content-3); font-weight: 500; }
+/* Angka display memakai figur proporsional. tabular-nums membuat angka besar
+   terlihat renggang - itu hanya untuk kolom yang harus rata vertikal. */
+.num-besar {
+  font-size: min(3.25rem, 13vw);
+  font-weight: 700; letter-spacing: -.04em; line-height: 1.1;
+  word-break: break-all;
+}
+.num-besar.kosong { color: var(--content-3); opacity: .45; }
+.entry .idr {
+  width: 100%; margin-top: 10px; text-align: center;
+  border: 1px solid var(--hairline); background: var(--card);
+  color: var(--content); border-radius: var(--r-sm); padding: 10px;
+}
+
+.err {
+  margin: 0 16px 8px; padding: 9px 12px; border-radius: var(--r-sm);
+  background: rgba(179, 38, 30, .12); color: var(--over); font-size: var(--t-foot);
+}
+
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 16px 12px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex: none; display: flex; align-items: center; gap: 6px;
+  border: 1px solid var(--hairline); background: var(--card); color: var(--content);
+  font-size: var(--t-sub); font-weight: 500;
+  padding: 0 13px; height: 40px; border-radius: 20px; cursor: pointer;
+  transition: transform .12s var(--spring);
+}
+.chip:active { transform: scale(.95); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+@media (prefers-color-scheme: dark) { .chip[aria-pressed="true"] { color: #06122E; } }
+
+.merchant {
+  margin: 0 16px 12px; padding: 11px 13px;
+  border: 1px solid var(--hairline); border-radius: var(--r-sm);
+  background: var(--card); color: var(--content);
+}
+
+.keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 12px 12px; }
+.key {
+  height: 54px; border: 0; border-radius: 12px;
+  background: var(--card); color: var(--content);
+  font-size: 1.5rem; font-weight: 500; cursor: pointer;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .06);
+  transition: transform .09s var(--spring), background .09s;
+}
+.key:active { transform: scale(.93); background: var(--fill); }
+.key.kecil { font-size: var(--t-body); font-weight: 600; color: var(--content-2); }
+
+.sheetfoot { display: flex; gap: 8px; padding: 0 12px 14px; }
+.akun {
+  flex: 0 0 38%; min-width: 0; padding: 0 10px; height: 52px;
+  border: 1px solid var(--hairline); border-radius: 14px;
+  background: var(--card); color: var(--content);
+}
+.primary {
+  flex: 1; height: 52px; border: 0; border-radius: 14px;
+  background: var(--accent); color: #fff; font-weight: 600; cursor: pointer;
+  transition: transform .12s var(--spring);
+}
+.primary:active { transform: scale(.98); }
+.primary:disabled { background: var(--fill); color: var(--content-3); cursor: default; transform: none; }
+@media (prefers-color-scheme: dark) { .primary { color: #06122E; } }

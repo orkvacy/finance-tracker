@@ -1,0 +1,95 @@
+/* Token desain. Diport dari design/prototype.html.
+   Angka kontras dihitung dari nilai hex terhadap permukaan kartunya.
+
+   Tiga aturan warna yang berlaku di seluruh aplikasi:
+     --accent  HANYA untuk elemen interaktif
+     --over    HANYA berarti "melewati batas" (status)
+     tidak ada hijau: arah uang dibawa tanda +/-, bukan warna.
+       Alasannya bukan selera - pasangan merah/hijau gagal uji CVD deutan
+       (delta-E 4.7) di mode gelap, dan "belanja" bukan kondisi error. */
+
+:root {
+  --surface: #F2F2F7;
+  --card: #FFFFFF;
+  --card-2: #F7F7F9;
+  --content: #17171A;   /* 17.4:1 */
+  --content-2: #5E5E66; /*  6.4:1 */
+  --content-3: #75757D; /*  4.6:1 */
+  --accent: #2A5BD7;    /*  5.9:1 */
+  --over: #B3261E;      /*  6.5:1 */
+  --hairline: #E2E2E7;
+  --fill: #EDEDF0;
+  --mark: #3C3C43;
+  --mark-mute: #C7C7CE;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .05), 0 8px 24px rgba(0, 0, 0, .06);
+
+  --r-lg: 18px;  /* HANYA dua nilai radius di seluruh aplikasi */
+  --r-sm: 10px;
+  --spring: cubic-bezier(.32, .72, 0, 1);
+
+  /* Skala tipe, diturunkan dari default iOS 17pt.
+     Semua pakai rem supaya Dynamic Type ikut menskala. */
+  --t-hero: 3.125rem;
+  --t-big: 1.6875rem;
+  --t-title: 1.375rem;
+  --t-body: 1.0625rem; /* 17px - default iOS */
+  --t-sub: .9375rem;
+  --t-foot: .8125rem;
+  --t-cap: .6875rem;   /* 11px - minimum iOS */
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tabbar-h: 62px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #000000;
+    --card: #1C1C1E;
+    --card-2: #2C2C2E;
+    --content: #F5F5F7;
+    --content-2: #A9A9B2; /* 7.3:1 */
+    --content-3: #8A8A94; /* 5.0:1 */
+    --accent: #7FA3F5;    /* 6.9:1 */
+    --over: #F28B7D;      /* 7.1:1 */
+    --hairline: #38383C;
+    --fill: #2C2C2E;
+    --mark: #D8D8DE;
+    --mark-mute: #48484E;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .5);
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  color-scheme: light dark;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  background: var(--surface);
+  color: var(--content);
+  /* dvh, bukan vh: di Safari iOS toolbar membuat 100vh salah hitung. */
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+}
+
+/* Input di bawah 16px memicu auto-zoom menyebalkan di Safari iOS. */
+input, select, textarea, button { font: inherit; font-size: max(1rem, var(--t-body)); }
+
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Angka rata vertikal - HANYA untuk kolom, tidak untuk figur besar.
+   tabular-nums pada angka display membuatnya terlihat renggang. */
+.num { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

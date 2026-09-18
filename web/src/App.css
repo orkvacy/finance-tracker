@@ -1,0 +1,148 @@
+.app { min-height: 100dvh; padding-top: var(--safe-top); }
+
+.screen {
+  max-width: 560px; margin: 0 auto;
+  padding: 8px 16px calc(var(--tabbar-h) + var(--safe-bottom) + 90px);
+}
+
+.err-bar {
+  background: rgba(179, 38, 30, .12); color: var(--over);
+  padding: 11px 13px; border-radius: var(--r-sm);
+  font-size: var(--t-foot); margin-bottom: 12px;
+}
+
+/* ---------- judul & kartu ---------- */
+.judul { padding: 6px 0 14px; }
+.judul h1 { font-size: var(--t-title); font-weight: 700; letter-spacing: -.02em; }
+.judul .sub { font-size: var(--t-foot); color: var(--content-3); margin-top: 2px; }
+
+.seksi {
+  font-size: var(--t-foot); font-weight: 600; color: var(--content-3);
+  text-transform: uppercase; letter-spacing: .055em; margin: 18px 4px 8px;
+}
+
+.kartu {
+  background: var(--card); border-radius: var(--r-lg);
+  box-shadow: var(--shadow); margin-bottom: 14px; padding: 16px;
+}
+.kartu.rapat { padding: 0; overflow: hidden; }
+
+/* ---------- baris daftar ---------- */
+.baris {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; min-height: 56px;
+  border-bottom: 1px solid var(--hairline);
+}
+.baris:last-child { border-bottom: 0; }
+.glif {
+  width: 36px; height: 36px; flex: none; border-radius: var(--r-sm);
+  background: var(--fill); color: var(--content-2);
+  display: grid; place-items: center;
+}
+.baris .isi { flex: 1; min-width: 0; }
+.baris .t1 { font-size: var(--t-body); font-weight: 500; line-height: 1.3; }
+.baris .t2 { font-size: var(--t-foot); color: var(--content-3); margin-top: 2px; }
+.baris .nilai { font-size: var(--t-body); font-weight: 600; text-align: right; white-space: nowrap; }
+.baris .nilai .est { display: block; font-size: var(--t-foot); font-weight: 400; color: var(--content-3); }
+
+.hapus {
+  border: 0; background: transparent; color: var(--content-3);
+  cursor: pointer; padding: 8px; margin: -8px -4px -8px 4px;
+  border-radius: var(--r-sm); min-width: 36px; min-height: 36px;
+}
+.hapus:active { color: var(--over); }
+
+/* ---------- hero ---------- */
+.hero .lede { font-size: var(--t-sub); color: var(--content-2); font-weight: 500; }
+/* Figur besar: angka proporsional, bukan tabular. */
+.hero .angka {
+  font-size: min(var(--t-hero), 12vw);
+  font-weight: 700; letter-spacing: -.035em; line-height: 1.08;
+  margin: 4px 0 6px; white-space: nowrap;
+}
+.hero .rinci { font-size: var(--t-foot); color: var(--content-3); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.hero .rinci b { color: var(--content-2); font-weight: 600; }
+
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: var(--t-cap); font-weight: 600;
+  padding: 3px 8px; border-radius: var(--r-sm);
+  background: var(--fill); color: var(--content-2);
+}
+.tag.alert { background: rgba(179, 38, 30, .13); color: var(--over); }
+
+/* ---------- batang kategori ---------- */
+.rank { margin-bottom: 14px; }
+.rank:last-child { margin-bottom: 0; }
+.rank .atas { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 5px; }
+.rank .n { font-size: var(--t-sub); font-weight: 500; }
+.rank .v { font-size: var(--t-foot); color: var(--content-2); }
+.rel { height: 10px; border-radius: 5px; background: var(--fill); overflow: hidden; }
+.rel i {
+  display: block; height: 100%; border-radius: 0 5px 5px 0;
+  background: var(--mark); transform-origin: left;
+  animation: wipe .45s var(--spring) both;
+}
+@keyframes wipe { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ---------- kosong ---------- */
+.kosong { text-align: center; padding: 48px 24px; color: var(--content-3); }
+.kosong .h { font-size: var(--t-body); font-weight: 600; color: var(--content-2); margin-bottom: 6px; }
+.kosong p { font-size: var(--t-sub); line-height: 1.55; }
+
+/* ---------- aksi utama ---------- */
+.fab {
+  position: fixed; z-index: 30;
+  right: max(16px, calc((100vw - 560px) / 2 + 16px));
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 12px);
+  height: 52px; padding: 0 20px; border: 0; border-radius: 26px;
+  background: var(--accent); color: #fff; font-weight: 600;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(42, 91, 215, .42);
+  transition: transform .14s var(--spring);
+}
+.fab:active { transform: scale(.94); }
+@media (prefers-color-scheme: dark) {
+  .fab { color: #06122E; box-shadow: 0 6px 20px rgba(0, 0, 0, .6); }
+}
+
+/* ---------- tab bar ---------- */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  height: calc(var(--tabbar-h) + var(--safe-bottom));
+  padding: 0 6px var(--safe-bottom);
+  display: flex;
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  border-top: 1px solid var(--hairline);
+}
+.tab {
+  flex: 1; border: 0; background: transparent; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding-top: 6px; min-height: 44px; color: var(--content-3);
+}
+.tab[aria-selected="true"] { color: var(--accent); }
+.tab span { font-size: var(--t-cap); font-weight: 500; }
+.tab svg { transition: transform .2s var(--spring); }
+.tab[aria-selected="true"] svg { transform: translateY(-1px) scale(1.06); }
+
+/* ---------- form ---------- */
+.form { display: flex; flex-wrap: wrap; gap: 8px; }
+.form input, .form select {
+  flex: 1 1 140px; min-width: 0; padding: 11px 13px;
+  border: 1px solid var(--hairline); border-radius: var(--r-sm);
+  background: var(--card); color: var(--content);
+}
+.form button {
+  flex: 1 1 100%; padding: 12px 14px; border: 0; border-radius: var(--r-sm);
+  background: var(--accent); color: #fff; font-weight: 600; cursor: pointer;
+}
+@media (prefers-color-scheme: dark) { .form button { color: #06122E; } }
+
+.tautan {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 14px 16px; color: var(--accent); text-decoration: none;
+  font-weight: 500; border-bottom: 1px solid var(--hairline);
+}
+.tautan:last-child { border-bottom: 0; }
