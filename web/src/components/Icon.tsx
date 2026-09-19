@@ -27,6 +27,7 @@ const PATHS: Record<string, string> = {
   setelan: 'M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zM12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.5 1.5M17.3 17.3l1.5 1.5M18.8 5.2l-1.5 1.5M6.7 17.3l-1.5 1.5',
   unduh: 'M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15',
   silang: 'M6 6l12 12M18 6L6 18',
+  bagikan: 'M12 15V3.5M8.5 7 12 3.5 15.5 7M5.5 12v7a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5v-7',
 }
 
 export function Icon({ name, size = 20, stroke = 1.75 }: {

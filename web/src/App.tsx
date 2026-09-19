@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { api, type Account, type Category, type Currency, type Summary, type Transaction } from './api'
 import { AddSheet, type Draft } from './components/AddSheet'
 import { Icon } from './components/Icon'
+import { PasangHint } from './components/PasangHint'
 import { Home } from './screens/Home'
 import { Transaksi } from './screens/Transaksi'
 import { Setelan } from './screens/Setelan'
@@ -66,6 +67,7 @@ export default function App() {
     <div className="app">
       <main className="screen">
         {error && <p className="err-bar">{error}</p>}
+        {tab === 'beranda' && <PasangHint />}
 
         {tab === 'beranda' && (
           <Home

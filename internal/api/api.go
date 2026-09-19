@@ -306,9 +306,23 @@ func (s *Server) serveSPA(w http.ResponseWriter, r *http.Request) {
 	if f, err := s.web.Open(name); err == nil {
 		defer f.Close()
 		if st, err := f.Stat(); err == nil && !st.IsDir() {
-			// Aset ber-hash dari Vite aman di-cache lama; index.html tidak.
-			if strings.HasPrefix(name, "assets/") {
+			switch {
+			case strings.HasPrefix(name, "assets/"):
+				// Nama berkasnya ber-hash, jadi isinya tidak akan pernah berubah.
 				w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+
+			case name == "sw.js" || name == "registerSW.js" || strings.HasPrefix(name, "workbox-"):
+				// Service worker WAJIB tidak di-cache. Kalau browser menyajikan
+				// sw.js lama dari cache, pengguna terkunci pada versi aplikasi
+				// lama dan tidak pernah menerima pembaruan - gejalanya "sudah
+				// deploy tapi HP masih menampilkan yang lama".
+				w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+
+			case strings.HasSuffix(name, ".webmanifest"):
+				// Go tidak mengenali ekstensi ini, dan ServeContent akan
+				// menebaknya sebagai teks biasa - sebagian browser lalu menolak
+				// manifest-nya dan opsi pasang tidak muncul sama sekali.
+				w.Header().Set("Content-Type", "application/manifest+json")
 			}
 			serve(w, r, name, st.ModTime(), f)
 			return

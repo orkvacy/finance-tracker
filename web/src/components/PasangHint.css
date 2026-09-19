@@ -1,0 +1,34 @@
+.pasang {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 14px 16px 16px;
+  margin-bottom: 14px;
+}
+.pasang-atas {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+}
+.pasang-judul { font-size: var(--t-body); font-weight: 600; }
+.pasang-tutup {
+  border: 0; background: transparent; color: var(--content-3); cursor: pointer;
+  /* 36px memenuhi jarak sentuh minimum walau ikonnya kecil. */
+  min-width: 36px; min-height: 36px; margin: -8px -8px 0 0;
+  display: grid; place-items: center; border-radius: var(--r-sm);
+}
+.pasang p {
+  font-size: var(--t-sub); color: var(--content-2);
+  line-height: 1.5; margin-top: 4px;
+}
+.pasang-langkah {
+  margin: 12px 0 0; padding-left: 20px;
+  font-size: var(--t-sub); color: var(--content-2); line-height: 1.7;
+}
+.pasang-langkah li { padding-left: 2px; }
+.pasang-langkah b { color: var(--content); font-weight: 600; }
+.pasang-langkah svg { vertical-align: -3px; color: var(--accent); }
+.pasang-aksi {
+  margin-top: 12px; width: 100%; height: 46px;
+  border: 0; border-radius: var(--r-sm);
+  background: var(--accent); color: #fff; font-weight: 600; cursor: pointer;
+}
+@media (prefers-color-scheme: dark) { .pasang-aksi { color: #06122E; } }

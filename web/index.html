@@ -2,17 +2,25 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
+  <!-- viewport-fit=cover wajib agar env(safe-area-inset-*) terisi; tanpa itu
+       tab bar tertimpa home indicator di iPhone tanpa tombol home. -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <title>Finance Track</title>
+  <meta name="description" content="Pelacak keuangan pribadi" />
+
+  <!-- Warna bilah status mengikuti tema sistem. Nilainya harus sama dengan
+       --surface, kalau tidak akan terlihat sebagai garis yang tidak menyatu. -->
   <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
-  <title>Finance Track</title>
-  <style>
-    /* Antarmuka M0 dipatok terang. Tanpa latar eksplisit, halaman ikut tema
-       gelap sistem sementara warna teksnya tetap gelap — judulnya hilang.
-       Dukungan mode gelap sungguhan datang di M1 bersama token desain. */
-    html { color-scheme: light; }
-    body { margin: 0; background: #F2F2F7; color: #17171A; min-height: 100dvh; }
-  </style>
+
+  <!-- iOS. Sebagian atribut ini sudah usang di iOS modern, tapi masih
+       dibutuhkan versi lama dan tidak merugikan. -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Finance" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
 </head>
 <body>
   <div id="root"></div>
