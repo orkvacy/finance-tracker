@@ -82,8 +82,13 @@ export const api = {
     req<Transaction[]>('/api/transactions?' + new URLSearchParams(q)),
   createTransaction: (t: Partial<Transaction>) =>
     req<Transaction>('/api/transactions', { method: 'POST', body: JSON.stringify(t) }),
+  updateTransaction: (id: string, t: Partial<Transaction>) =>
+    req<{ status: string }>(`/api/transactions/${id}`, { method: 'PUT', body: JSON.stringify(t) }),
   deleteTransaction: (id: string) =>
     req<{ status: string }>(`/api/transactions/${id}`, { method: 'DELETE' }),
+  /** Membatalkan hapus (FR-1.5). Mungkin karena hapusnya lunak, bukan permanen. */
+  restoreTransaction: (id: string) =>
+    req<{ status: string }>(`/api/transactions/${id}/restore`, { method: 'POST' }),
 
   summary: (q: Record<string, string> = {}) =>
     req<Summary>('/api/summary?' + new URLSearchParams(q)),

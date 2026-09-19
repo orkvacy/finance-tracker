@@ -47,6 +47,14 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, .16);
 }
 
+/* Jejak asal transaksi saat menyunting. Penting karena sheet ini tidak punya
+   pemilih tanggal: tanpa kalimat ini, menyunting terasa seperti mencatat
+   ulang, dan orang akan mengira tanggalnya jadi hari ini. */
+.jejak {
+  font-size: var(--t-foot); color: var(--content-3);
+  text-align: center; padding: 0 16px 2px;
+}
+
 .entry { padding: 4px 16px 10px; text-align: center; }
 .entry .cur { font-size: var(--t-sub); color: var(--content-3); font-weight: 500; }
 /* Angka display memakai figur proporsional. tabular-nums membuat angka besar
@@ -112,3 +120,15 @@
 .primary:active { transform: scale(.98); }
 .primary:disabled { background: var(--fill); color: var(--content-3); cursor: default; transform: none; }
 @media (prefers-color-scheme: dark) { .primary { color: #06122E; } }
+
+/* --over adalah satu-satunya warna yang berarti "hati-hati" di aplikasi ini,
+   dan hapus memang satu-satunya aksi merusak di sheet. Bukan tombol penuh:
+   ia tidak boleh bersaing berat dengan Simpan yang persis di atasnya. */
+.hapus-tx {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  margin: 0 12px 14px; padding: 0 14px; height: 48px;
+  border: 0; border-radius: 14px; cursor: pointer;
+  background: transparent; color: var(--over);
+  font-size: var(--t-sub); font-weight: 500;
+}
+.hapus-tx:active { background: rgba(179, 38, 30, .1); }

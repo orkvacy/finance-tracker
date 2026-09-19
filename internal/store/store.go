@@ -390,6 +390,13 @@ func (s *Store) UpdateTransaction(ctx context.Context, tid string, t Transaction
 	if t.Currency == "" {
 		t.Currency = "IDR"
 	}
+	// Status kosong berarti "biarkan seperti transaksi manual biasa". Tanpa
+	// baris ini, PUT yang tidak menyertakan status akan menulis string kosong,
+	// dan CHECK di skema menolaknya sebagai galat internal - setiap penyuntingan
+	// dari klien yang tidak tahu field ini akan gagal tanpa sebab yang jelas.
+	if t.Status == "" {
+		t.Status = "confirmed"
+	}
 
 	// Ekuivalen rupiah WAJIB dihitung ulang di sini. Tanpa ini, mengubah nominal
 	// transaksi USD akan meninggalkan amount_idr yang basi, dan seluruh laporan
@@ -414,6 +421,9 @@ func (s *Store) UpdateTransaction(ctx context.Context, tid string, t Transaction
 		t.Note, t.Merchant, t.Status, t.Currency, t.RateToIDR, t.AmountIDR,
 		time.Now().UTC().Format(time.RFC3339), tid)
 	if err != nil {
+		if strings.Contains(err.Error(), "FOREIGN KEY") {
+			return fmt.Errorf("%w: akun atau kategori tidak ada", ErrNotFound)
+		}
 		return err
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
@@ -452,11 +462,36 @@ func (s *Store) ListCurrencies(ctx context.Context) ([]Currency, error) {
 // DeleteTransaction menandai terhapus, tidak membuang barisnya — supaya undo
 // (FR-1.5) mungkin dilakukan dan riwayat tetap utuh.
 func (s *Store) DeleteTransaction(ctx context.Context, tid string) error {
+	now := time.Now().UTC().Format(time.RFC3339)
 	res, err := s.db.W.ExecContext(ctx,
 		`UPDATE transactions SET deleted_at = ?, updated_at = ?
-		  WHERE id = ? AND deleted_at IS NULL`,
-		time.Now().UTC().Format(time.RFC3339), time.Now().UTC().Format(time.RFC3339), tid)
+		  WHERE id = ? AND deleted_at IS NULL`, now, now, tid)
 	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// RestoreTransaction membatalkan penghapusan (FR-1.5).
+//
+// Undo hanya mungkin karena hapus bersifat lunak. Kalau baris aslinya dibuang,
+// satu-satunya cara memulihkan adalah mengetik ulang — dan pengguna yang tidak
+// yakin bisa membatalkan akan ragu menekan hapus selamanya.
+func (s *Store) RestoreTransaction(ctx context.Context, tid string) error {
+	res, err := s.db.W.ExecContext(ctx,
+		`UPDATE transactions SET deleted_at = NULL, updated_at = ?
+		  WHERE id = ? AND deleted_at IS NOT NULL`,
+		time.Now().UTC().Format(time.RFC3339), tid)
+	if err != nil {
+		// Unique index dedup hanya mengikat baris yang hidup, jadi transaksi
+		// pengganti bisa masuk setelah yang ini dihapus. Memulihkannya akan
+		// membuat keduanya hidup bersamaan, dan itu yang ditolak di sini.
+		if strings.Contains(err.Error(), "UNIQUE") {
+			return fmt.Errorf("%w: transaksi penggantinya sudah tercatat", ErrConflict)
+		}
 		return err
 	}
 	if n, _ := res.RowsAffected(); n == 0 {

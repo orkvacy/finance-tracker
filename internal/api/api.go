@@ -50,6 +50,7 @@ func New(s *store.Store, web fs.FS, tz *time.Location, log *slog.Logger) http.Ha
 		r.Post("/transactions", srv.createTransaction)
 		r.Put("/transactions/{id}", srv.updateTransaction)
 		r.Delete("/transactions/{id}", srv.deleteTransaction)
+		r.Post("/transactions/{id}/restore", srv.restoreTransaction)
 
 		r.Get("/summary", srv.summary)
 		r.Get("/export.csv", srv.exportCSV)
@@ -267,6 +268,16 @@ func (s *Server) updateTransaction(w http.ResponseWriter, r *http.Request) {
 func (s *Server) deleteTransaction(w http.ResponseWriter, r *http.Request) {
 	if err := s.store.DeleteTransaction(r.Context(), chi.URLParam(r, "id")); err != nil {
 		s.oops(w, err, "delete transaction")
+		return
+	}
+	ok(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// restoreTransaction memakai POST, bukan PUT: memulihkan bukan menuliskan
+// keadaan tertentu, dan aksi yang tidak idempoten tidak boleh menyamar jadi PUT.
+func (s *Server) restoreTransaction(w http.ResponseWriter, r *http.Request) {
+	if err := s.store.RestoreTransaction(r.Context(), chi.URLParam(r, "id")); err != nil {
+		s.oops(w, err, "restore transaction")
 		return
 	}
 	ok(w, http.StatusOK, map[string]string{"status": "ok"})

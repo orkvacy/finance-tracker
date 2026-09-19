@@ -34,6 +34,18 @@
   border-bottom: 1px solid var(--hairline);
 }
 .baris:last-child { border-bottom: 0; }
+
+/* Baris transaksi adalah <button>: seluruh barisnya membuka penyunting.
+   Gaya bawaan tombol harus dilucuti dulu, sisakan garis bawah pemisahnya. */
+button.baris {
+  width: 100%; text-align: left; cursor: pointer;
+  border-width: 0 0 1px; border-style: solid; border-color: var(--hairline);
+  background: transparent; color: inherit; font: inherit;
+}
+button.baris:last-child { border-bottom-width: 0; }
+button.baris:active { background: var(--fill); }
+/* Chevron dilemahkan: ia petunjuk, bukan informasi. */
+button.baris > svg:last-child { color: var(--content-3); opacity: .6; flex: none; }
 .glif {
   width: 36px; height: 36px; flex: none; border-radius: var(--r-sm);
   background: var(--fill); color: var(--content-2);
@@ -44,13 +56,6 @@
 .baris .t2 { font-size: var(--t-foot); color: var(--content-3); margin-top: 2px; }
 .baris .nilai { font-size: var(--t-body); font-weight: 600; text-align: right; white-space: nowrap; }
 .baris .nilai .est { display: block; font-size: var(--t-foot); font-weight: 400; color: var(--content-3); }
-
-.hapus {
-  border: 0; background: transparent; color: var(--content-3);
-  cursor: pointer; padding: 8px; margin: -8px -4px -8px 4px;
-  border-radius: var(--r-sm); min-width: 36px; min-height: 36px;
-}
-.hapus:active { color: var(--over); }
 
 /* ---------- hero ---------- */
 .hero .lede { font-size: var(--t-sub); color: var(--content-2); font-weight: 500; }

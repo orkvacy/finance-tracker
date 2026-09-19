@@ -1,16 +1,14 @@
-import type { Account, Category, Transaction } from '../api'
+import type { Account, Category, Currency, Transaction } from '../api'
 import { rupiah, tanggalRamah } from '../lib/format'
-import { Icon, ikonKategori } from '../components/Icon'
+import { BarisTx } from '../components/BarisTx'
 
-export function Transaksi({ transactions, accounts, categories, onHapus }: {
+export function Transaksi({ transactions, accounts, categories, currencies, onPilih }: {
   transactions: Transaction[]
   accounts: Account[]
   categories: Category[]
-  onHapus: (id: string) => void
+  currencies: Currency[]
+  onPilih: (t: Transaction) => void
 }) {
-  const kat = (id: string | null) => categories.find((c) => c.id === id)
-  const akun = (id: string) => accounts.find((a) => a.id === id)
-
   // Dikelompokkan per tanggal LOKAL yang sudah dihitung server (occurredDate),
   // bukan dari occurredAt yang UTC - supaya batas hari selalu sama antara
   // yang ditampilkan dan yang dipakai laporan.
@@ -34,7 +32,7 @@ export function Transaksi({ transactions, accounts, categories, onHapus }: {
     <>
       <div className="judul">
         <h1>Transaksi</h1>
-        <div className="sub">{transactions.length} terakhir</div>
+        <div className="sub">{transactions.length} terakhir · ketuk untuk mengubah</div>
       </div>
 
       {[...perHari.entries()].map(([tgl, list]) => {
@@ -49,28 +47,10 @@ export function Transaksi({ transactions, accounts, categories, onHapus }: {
             </div>
             <section className="kartu rapat">
               {list.map((t) => (
-                <div className="baris" key={t.id}>
-                  <div className="glif">
-                    <Icon name={ikonKategori[t.categoryId ?? ''] ?? 'titik'} size={19} />
-                  </div>
-                  <div className="isi">
-                    <div className="t1">{t.merchant || kat(t.categoryId)?.name || 'Tanpa kategori'}</div>
-                    <div className="t2">
-                      {kat(t.categoryId)?.name ?? 'Tanpa kategori'} · {akun(t.accountId)?.name ?? '?'}
-                      {t.status === 'draft' && ' · draft'}
-                    </div>
-                  </div>
-                  <div className="nilai num">
-                    {t.direction === 'out' ? '−' : '+'}{rupiah(t.amountIdr)}
-                  </div>
-                  <button
-                    className="hapus"
-                    aria-label={`Hapus ${t.merchant || 'transaksi'}`}
-                    onClick={() => onHapus(t.id)}
-                  >
-                    <Icon name="silang" size={17} />
-                  </button>
-                </div>
+                <BarisTx
+                  key={t.id} t={t} accounts={accounts} categories={categories}
+                  currencies={currencies} onPilih={onPilih}
+                />
               ))}
             </section>
           </div>

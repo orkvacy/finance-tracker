@@ -1,14 +1,16 @@
 import type { Account, Category, Currency, Summary, Transaction } from '../api'
 import { hariIni, namaBulan, rupiah, singkat, uang } from '../lib/format'
-import { Icon, ikonKategori } from '../components/Icon'
+import { Icon } from '../components/Icon'
+import { BarisTx } from '../components/BarisTx'
 
-export function Home({ summary, accounts, categories, currencies, transactions, onTambahAkun }: {
+export function Home({ summary, accounts, categories, currencies, transactions, onTambahAkun, onPilih }: {
   summary: Summary | null
   accounts: Account[]
   categories: Category[]
   currencies: Currency[]
   transactions: Transaction[]
   onTambahAkun: () => void
+  onPilih: (t: Transaction) => void
 }) {
   if (accounts.length === 0) {
     return (
@@ -25,8 +27,6 @@ export function Home({ summary, accounts, categories, currencies, transactions, 
   }
 
   const cur = (code: string) => currencies.find((c) => c.code === code)
-  const kat = (id: string | null) => categories.find((c) => c.id === id)
-  const akun = (id: string) => accounts.find((a) => a.id === id)
 
   const hariIniList = transactions.filter((t) => t.occurredDate === hariIni())
   const keluarHariIni = hariIniList
@@ -78,23 +78,10 @@ export function Home({ summary, accounts, categories, currencies, transactions, 
           <div className="seksi">Hari ini</div>
           <section className="kartu rapat">
             {hariIniList.map((t) => (
-              <div className="baris" key={t.id}>
-                <div className="glif">
-                  <Icon name={ikonKategori[t.categoryId ?? ''] ?? 'titik'} size={19} />
-                </div>
-                <div className="isi">
-                  <div className="t1">{t.merchant || kat(t.categoryId)?.name || 'Tanpa kategori'}</div>
-                  <div className="t2">
-                    {kat(t.categoryId)?.name ?? 'Tanpa kategori'} · {akun(t.accountId)?.name ?? '?'}
-                  </div>
-                </div>
-                <div className="nilai num">
-                  {t.direction === 'out' ? '−' : '+'}{rupiah(t.amountIdr)}
-                  {t.currency !== 'IDR' && (
-                    <span className="est">{uang(t.amount, cur(t.currency))}</span>
-                  )}
-                </div>
-              </div>
+              <BarisTx
+                key={t.id} t={t} accounts={accounts} categories={categories}
+                currencies={currencies} onPilih={onPilih}
+              />
             ))}
           </section>
         </>

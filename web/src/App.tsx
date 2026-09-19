@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, type Account, type Category, type Currency, type Summary, type Transaction } from './api'
 import { AddSheet, type Draft } from './components/AddSheet'
 import { Icon } from './components/Icon'
 import { PasangHint } from './components/PasangHint'
+import { Toast } from './components/Toast'
 import { Home } from './screens/Home'
 import { Transaksi } from './screens/Transaksi'
 import { Setelan } from './screens/Setelan'
@@ -13,7 +14,13 @@ type Tab = 'beranda' | 'transaksi' | 'laporan' | 'setelan'
 export default function App() {
   const [tab, setTab] = useState<Tab>('beranda')
   const [sheet, setSheet] = useState(false)
+  const [edit, setEdit] = useState<Transaction | null>(null)
   const [error, setError] = useState('')
+
+  // Nonce dipakai sebagai key Toast, supaya pesan yang sama dua kali berturut-
+  // turut tetap memulai hitungan 6 detiknya dari awal.
+  const [toast, setToast] = useState<{ n: number; pesan: string; undoId?: string } | null>(null)
+  const nonce = useRef(0)
 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -43,8 +50,25 @@ export default function App() {
 
   useEffect(() => { reload() }, [reload])
 
+  function beriTahu(pesan: string, undoId?: string) {
+    nonce.current += 1
+    setToast({ n: nonce.current, pesan, undoId })
+  }
+
+  function bukaUbah(t: Transaction) {
+    setEdit(t)
+    setSheet(true)
+  }
+
+  function tutupSheet() {
+    setSheet(false)
+    // Dikosongkan belakangan supaya isinya tidak berkedip jadi form kosong
+    // selagi sheet-nya masih meluncur turun.
+    setTimeout(() => setEdit(null), 300)
+  }
+
   async function simpan(d: Draft) {
-    await api.createTransaction({
+    const isi = {
       accountId: d.accountId,
       categoryId: d.categoryId,
       amount: d.amount,
@@ -52,14 +76,35 @@ export default function App() {
       currency: d.currency,
       merchant: d.merchant,
       ...(d.amountIdr ? { amountIdr: d.amountIdr } : {}),
-    })
+    }
+
+    if (d.id) {
+      await api.updateTransaction(d.id, {
+        ...isi, occurredAt: d.occurredAt, note: d.note, status: d.status,
+      })
+      await reload()
+      beriTahu('Perubahan disimpan')
+      return
+    }
+
+    await api.createTransaction(isi)
     setLastAccount(d.accountId)
     try { localStorage.setItem('ft.akunTerakhir', d.accountId) } catch { /* mode privat */ }
     await reload()
   }
 
   async function hapus(id: string) {
-    try { await api.deleteTransaction(id); await reload() }
+    tutupSheet()
+    try {
+      await api.deleteTransaction(id)
+      await reload()
+      beriTahu('Transaksi dihapus', id)
+    } catch (e) { setError((e as Error).message) }
+  }
+
+  async function urungkan(id: string) {
+    setToast(null)
+    try { await api.restoreTransaction(id); await reload() }
     catch (e) { setError((e as Error).message) }
   }
 
@@ -74,12 +119,13 @@ export default function App() {
             summary={summary} accounts={accounts} categories={categories}
             currencies={currencies} transactions={transactions}
             onTambahAkun={() => setTab('setelan')}
+            onPilih={bukaUbah}
           />
         )}
         {tab === 'transaksi' && (
           <Transaksi
             transactions={transactions} accounts={accounts}
-            categories={categories} onHapus={hapus}
+            categories={categories} currencies={currencies} onPilih={bukaUbah}
           />
         )}
         {tab === 'laporan' && (
@@ -98,10 +144,21 @@ export default function App() {
           Posisinya di kanan bawah karena kanan atas tidak terjangkau jempol
           di layar 414x896 - NFR-1 menang atas konvensi penempatan itu. */}
       {accounts.length > 0 && (
-        <button className="fab" onClick={() => setSheet(true)} aria-label="Catat transaksi baru">
+        <button className="fab" onClick={() => { setEdit(null); setSheet(true) }}
+                aria-label="Catat transaksi baru">
           <Icon name="tambah" size={21} stroke={2.4} />
           Catat
         </button>
+      )}
+
+      {toast && (
+        <Toast
+          key={toast.n}
+          pesan={toast.pesan}
+          aksi={toast.undoId ? 'Urungkan' : undefined}
+          onAksi={() => toast.undoId && urungkan(toast.undoId)}
+          onTutup={() => setToast(null)}
+        />
       )}
 
       <nav className="tabbar" role="tablist" aria-label="Bagian utama">
@@ -113,8 +170,10 @@ export default function App() {
 
       <AddSheet
         open={sheet}
-        onClose={() => setSheet(false)}
+        onClose={tutupSheet}
         onSave={simpan}
+        onHapus={hapus}
+        edit={edit}
         accounts={accounts}
         categories={categories}
         currencies={currencies}

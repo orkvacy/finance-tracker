@@ -1,0 +1,33 @@
+/* Duduk tepat di atas tab bar, bukan menutupinya: navigasi harus tetap
+   terjangkau selagi pemberitahuannya tampil.
+
+   z-index 35 > FAB (30) dan latarnya pekat, jadi tombol Catat tertutup penuh
+   selama 6 detik itu. Disengaja - kalau keduanya terlihat bersamaan, Urungkan
+   dan Catat berdesakan di titik yang sama persis. */
+.toast {
+  position: fixed; z-index: 35;
+  left: max(12px, calc((100vw - 560px) / 2 + 12px));
+  right: max(12px, calc((100vw - 560px) / 2 + 12px));
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 12px);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 10px 10px 16px;
+  border-radius: 14px;
+  background: var(--mark); color: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+  font-size: var(--t-sub);
+  animation: naik .32s var(--spring) both;
+}
+@keyframes naik {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Tombol undo harus jelas tertekan-able dan memenuhi 44pt - ini satu-satunya
+   jalan keluar dari penghapusan yang salah, dan jendelanya cuma 6 detik. */
+.toast button {
+  flex: none; border: 0; cursor: pointer;
+  background: transparent; color: inherit;
+  font-weight: 600; text-decoration: underline;
+  padding: 0 12px; min-height: 44px; border-radius: var(--r-sm);
+}
+.toast button:active { opacity: .6; }

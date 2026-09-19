@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"testing"
 	"time"
@@ -326,5 +327,148 @@ func TestTaksiranSaldoMenghormatiDesimal(t *testing.T) {
 	if accs[0].BalanceIDR != 7_200_000 {
 		t.Errorf("taksiran = %d, seharusnya 7200000 (450 USD x 16.000), bukan 720 juta",
 			accs[0].BalanceIDR)
+	}
+}
+
+// ------------------------------------------------------------ US-05
+
+// Menyunting transaksi TIDAK boleh memindahkan tanggalnya. Server menafsirkan
+// occurredAt kosong sebagai "sekarang", jadi klien yang lupa mengirim ulang
+// field itu akan diam-diam menyeret transaksi lama ke hari ini — dan laporan
+// bulan lalu ikut berubah tanpa ada galat yang muncul.
+func TestUbahTidakMemindahkanTanggal(t *testing.T) {
+	ctx := context.Background()
+	s := fresh(t)
+	acc, _ := s.CreateAccount(ctx, store.Account{Name: "BCA", Type: "bank"})
+
+	tx, err := s.CreateTransaction(ctx, store.Transaction{
+		AccountID: acc.ID, Amount: 25_000, Direction: "out",
+		OccurredAt: "2026-08-14T04:00:00Z",
+	})
+	if err != nil {
+		t.Fatalf("membuat transaksi: %v", err)
+	}
+
+	tx.Amount = 27_500
+	if err := s.UpdateTransaction(ctx, tx.ID, tx); err != nil {
+		t.Fatalf("mengubah transaksi: %v", err)
+	}
+
+	list, _ := s.ListTransactions(ctx, store.TxFilter{})
+	if got := list[0].OccurredDate; got != "2026-08-14" {
+		t.Errorf("tanggal = %s, seharusnya tetap 2026-08-14", got)
+	}
+	if got := list[0].Amount; got != 27_500 {
+		t.Errorf("nominal = %d, seharusnya 27500", got)
+	}
+}
+
+// Menyunting nominal mata uang asing harus ikut menghitung ulang ekuivalen
+// rupiahnya. Kalau tidak, seluruh agregasi memakai angka basi tanpa galat.
+func TestUbahMenghitungUlangEkuivalenRupiah(t *testing.T) {
+	ctx := context.Background()
+	s := fresh(t)
+	acc, _ := s.CreateAccount(ctx, store.Account{Name: "Wise", Type: "ewallet", Currency: "USD"})
+
+	tx, err := s.CreateTransaction(ctx, store.Transaction{
+		AccountID: acc.ID, Amount: 10_000, Direction: "in",
+		Currency: "USD", RateToIDR: 16_000, OccurredAt: "2026-09-10T04:00:00Z",
+	})
+	if err != nil {
+		t.Fatalf("membuat transaksi: %v", err)
+	}
+
+	// Ternyata rupiah yang benar-benar mendarat 1.550.000, bukan 1.600.000:
+	// Wise memotong biaya yang tidak terlihat di kurs yang diiklankan.
+	tx.AmountIDR = 1_550_000
+	if err := s.UpdateTransaction(ctx, tx.ID, tx); err != nil {
+		t.Fatalf("mengubah transaksi: %v", err)
+	}
+
+	sum, _ := s.Summary(ctx, "2026-09-01", "2026-09-30")
+	if sum.In != 1_550_000 {
+		t.Errorf("masuk = %d, seharusnya 1550000 — ekuivalen rupiah tidak ikut disunting", sum.In)
+	}
+}
+
+// Status kosong pada PUT harus diperlakukan sebagai confirmed. Tanpa default
+// itu, CHECK di skema menolak string kosong dan penyuntingan biasa gagal
+// sebagai galat internal.
+func TestUbahTanpaStatusTetapTercatat(t *testing.T) {
+	ctx := context.Background()
+	s := fresh(t)
+	acc, _ := s.CreateAccount(ctx, store.Account{Name: "BCA", Type: "bank"})
+	tx, _ := s.CreateTransaction(ctx, store.Transaction{AccountID: acc.ID, Amount: 10_000, Direction: "out"})
+
+	if err := s.UpdateTransaction(ctx, tx.ID, store.Transaction{
+		AccountID: acc.ID, Amount: 12_000, Direction: "out",
+		OccurredAt: tx.OccurredAt, // status sengaja dikosongkan
+	}); err != nil {
+		t.Fatalf("mengubah transaksi: %v", err)
+	}
+
+	list, _ := s.ListTransactions(ctx, store.TxFilter{})
+	if list[0].Status != "confirmed" {
+		t.Errorf("status = %q, seharusnya confirmed", list[0].Status)
+	}
+}
+
+// Hapus lalu urungkan harus mengembalikan transaksi apa adanya, termasuk
+// pengaruhnya ke saldo — itulah gunanya hapus bersifat lunak.
+func TestUrungkanHapusMengembalikanSaldo(t *testing.T) {
+	ctx := context.Background()
+	s := fresh(t)
+	acc, _ := s.CreateAccount(ctx, store.Account{Name: "BCA", Type: "bank", OpeningBalance: 500_000})
+	tx, _ := s.CreateTransaction(ctx, store.Transaction{AccountID: acc.ID, Amount: 25_000, Direction: "out"})
+
+	if err := s.DeleteTransaction(ctx, tx.ID); err != nil {
+		t.Fatalf("menghapus: %v", err)
+	}
+	accs, _ := s.ListAccounts(ctx)
+	if accs[0].Balance != 500_000 {
+		t.Fatalf("saldo setelah hapus = %d, seharusnya 500000", accs[0].Balance)
+	}
+
+	if err := s.RestoreTransaction(ctx, tx.ID); err != nil {
+		t.Fatalf("mengurungkan: %v", err)
+	}
+	accs, _ = s.ListAccounts(ctx)
+	if accs[0].Balance != 475_000 {
+		t.Errorf("saldo setelah urung = %d, seharusnya 475000", accs[0].Balance)
+	}
+	if list, _ := s.ListTransactions(ctx, store.TxFilter{}); len(list) != 1 {
+		t.Errorf("jumlah transaksi = %d, seharusnya 1", len(list))
+	}
+}
+
+// Mengurungkan dua kali tidak boleh berpura-pura berhasil: tombol Urungkan yang
+// tertekan ganda harus memberi jawaban yang sama, bukan menggandakan apa pun.
+func TestUrungkanDuaKaliDitolak(t *testing.T) {
+	ctx := context.Background()
+	s := fresh(t)
+	acc, _ := s.CreateAccount(ctx, store.Account{Name: "BCA", Type: "bank"})
+	tx, _ := s.CreateTransaction(ctx, store.Transaction{AccountID: acc.ID, Amount: 10_000, Direction: "out"})
+
+	s.DeleteTransaction(ctx, tx.ID)
+	if err := s.RestoreTransaction(ctx, tx.ID); err != nil {
+		t.Fatalf("urung pertama: %v", err)
+	}
+	if err := s.RestoreTransaction(ctx, tx.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("urung kedua = %v, seharusnya ErrNotFound", err)
+	}
+}
+
+// Transaksi yang sudah dihapus tidak boleh bisa disunting — kalau bisa, undo
+// akan memulihkan isi yang berbeda dari yang dilihat pengguna saat menghapus.
+func TestUbahTransaksiTerhapusDitolak(t *testing.T) {
+	ctx := context.Background()
+	s := fresh(t)
+	acc, _ := s.CreateAccount(ctx, store.Account{Name: "BCA", Type: "bank"})
+	tx, _ := s.CreateTransaction(ctx, store.Transaction{AccountID: acc.ID, Amount: 10_000, Direction: "out"})
+	s.DeleteTransaction(ctx, tx.ID)
+
+	tx.Amount = 99_000
+	if err := s.UpdateTransaction(ctx, tx.ID, tx); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("ubah transaksi terhapus = %v, seharusnya ErrNotFound", err)
 	}
 }

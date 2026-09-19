@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Account, Category, Currency } from '../api'
-import { uang } from '../lib/format'
+import type { Account, Category, Currency, Transaction } from '../api'
+import { tanggalRamah, uang } from '../lib/format'
 import { Icon, ikonKategori } from './Icon'
 import './AddSheet.css'
 
 export type Draft = {
+  /** Terisi hanya saat menyunting; kosong berarti transaksi baru. */
+  id?: string
   amount: number
   accountId: string
   categoryId: string | null
@@ -12,6 +14,10 @@ export type Draft = {
   currency: string
   amountIdr?: number
   merchant: string
+  /** Wajib ikut saat menyunting: server membaca occurredAt kosong sebagai "sekarang". */
+  occurredAt?: string
+  note?: string
+  status?: 'draft' | 'confirmed'
 }
 
 /**
@@ -24,11 +30,19 @@ export type Draft = {
  *   - kategori sudah terpilih otomatis berdasarkan jam (FR-1.2)
  *   - akun default = akun terakhir dipakai
  * Jalur tercepatnya: ketik nominal, tekan Simpan. Dua interaksi.
+ *
+ * Sheet yang sama dipakai untuk menyunting (US-05 / FR-1.5) dengan mengisi
+ * prop `edit`. Satu penyunting, bukan dua: aturan validasi mata uang asing
+ * cukup rumit sehingga menduplikasinya dijamin berakhir dengan dua versi yang
+ * perlahan berbeda.
  */
-export function AddSheet({ open, onClose, onSave, accounts, categories, currencies, defaultAccountId }: {
+export function AddSheet({ open, onClose, onSave, onHapus, edit, accounts, categories, currencies, defaultAccountId }: {
   open: boolean
   onClose: () => void
   onSave: (d: Draft) => Promise<void>
+  onHapus: (id: string) => void
+  /** Transaksi yang sedang disunting, atau null untuk transaksi baru. */
+  edit: Transaction | null
   accounts: Account[]
   categories: Category[]
   currencies: Currency[]
@@ -52,10 +66,25 @@ export function AddSheet({ open, onClose, onSave, accounts, categories, currenci
 
   useEffect(() => {
     if (!open) return
-    setRaw(''); setMerchant(''); setIdrRaw(''); setError(''); setDirection('out')
+    setError('')
+
+    if (edit) {
+      setRaw(String(edit.amount))
+      setDirection(edit.direction)
+      setAccountId(edit.accountId)
+      setCategoryId(edit.categoryId)
+      setMerchant(edit.merchant)
+      // Rupiah yang dulu benar-benar diterima ikut ditampilkan, bukan dikosongkan:
+      // kalau dibiarkan kosong, menyunting nominal asing akan memaksa mengetik
+      // ulang angka yang sebenarnya sudah benar.
+      setIdrRaw(edit.currency === 'IDR' ? '' : String(edit.amountIdr))
+      return
+    }
+
+    setRaw(''); setMerchant(''); setIdrRaw(''); setDirection('out')
     setAccountId(defaultAccountId || accounts[0]?.id || '')
     setCategoryId(tebakKategori(categories))
-  }, [open, defaultAccountId])
+  }, [open, edit, defaultAccountId])
 
   // Chip terpilih digeser ke tampak. Tebakan kategori tidak ada gunanya kalau
   // chip-nya berada di luar layar - pengguna akan mengira tidak ada yang
@@ -98,6 +127,9 @@ export function AddSheet({ open, onClose, onSave, accounts, categories, currenci
         currency,
         merchant: merchant.trim(),
         ...(asing ? { amountIdr: idr } : {}),
+        // Field yang tidak disentuh penyunting dibawa apa adanya. occurredAt
+        // yang hilang akan menyeret transaksi lama ke hari ini secara diam-diam.
+        ...(edit ? { id: edit.id, occurredAt: edit.occurredAt, note: edit.note, status: edit.status } : {}),
       })
       onClose()
     } catch (e) {
@@ -114,7 +146,7 @@ export function AddSheet({ open, onClose, onSave, accounts, categories, currenci
         className={'sheet' + (open ? ' on' : '')}
         role="dialog"
         aria-modal="true"
-        aria-label={direction === 'out' ? 'Catat pengeluaran' : 'Catat pemasukan'}
+        aria-label={edit ? 'Ubah transaksi' : direction === 'out' ? 'Catat pengeluaran' : 'Catat pemasukan'}
         aria-hidden={!open}
       >
         <div className="grabber" />
@@ -137,6 +169,12 @@ export function AddSheet({ open, onClose, onSave, accounts, categories, currenci
             {busy ? '...' : 'Simpan'}
           </button>
         </header>
+
+        {edit && (
+          <p className="jejak">
+            Dicatat {tanggalRamah(edit.occurredDate)} · tanggalnya tidak ikut berubah
+          </p>
+        )}
 
         <div className="entry">
           <div className="cur">{cur?.symbol ?? 'Rp'}</div>
@@ -204,6 +242,16 @@ export function AddSheet({ open, onClose, onSave, accounts, categories, currenci
             {busy ? 'Menyimpan...' : 'Simpan'}
           </button>
         </div>
+
+        {/* Hapus ada di dalam penyunting, bukan di baris daftar: aksi merusak
+            tidak boleh menempel pada daftar yang digulir tiap hari. Tanpa
+            konfirmasi, karena ada Urungkan setelahnya. */}
+        {edit && (
+          <button className="hapus-tx" onClick={() => onHapus(edit.id)}>
+            <Icon name="sampah" size={18} />
+            Hapus transaksi
+          </button>
+        )}
       </section>
     </>
   )
